@@ -4,6 +4,7 @@ import os
 import sys
 from urllib import request
 from urllib import parse
+from urllib import error
 import simplejson as json
 import platform
 import datetime
@@ -11,7 +12,49 @@ import datetime
 API_KEY = '1437381740'
 KEYFROM = 'py-youdao-dict'
 
-def GetTranslate(txt):
+def GetTranslateFromFile(query):
+	filepath = r'py-youdao-dict.json'
+	fp = open(filepath, 'r')
+	fp.seek(os.SEEK_SET)
+	findWord = False
+	for wordSaved in fp:
+		jsonSaved = json.loads(wordSaved)
+		if query == jsonSaved.get('query', ''):
+			findWord = True
+			break
+	fp.close()
+	if findWord:	
+		return jsonSaved
+	else:
+		return None	
+
+def SaveWordToFile(query, jsonData, cmdDict):
+	if not cmdDict['noSave']:
+		choices = 'y'
+		if not cmdDict['autoSave']:
+			choices = input(u'是否写入单词本，回复(y/n):')
+		if choices in ['y', 'Y']:
+			filepath = r'py-youdao-dict.json'
+			fp = open(filepath, 'a+')
+			alreadySaved = False
+			fp.seek(os.SEEK_SET)
+			for wordSaved in fp:
+				jsonSaved = json.loads(wordSaved)
+				if query == jsonSaved.get('query', ''):
+					alreadySaved = True
+
+			fp.seek(os.SEEK_END)
+			if alreadySaved:
+				print(u'单词已经在单词本\r\n')
+			else:
+				fp.write(json.dumps(jsonData))
+				fp.write('\r\n')
+				print(u'写入单词本成功\r\n')
+			fp.close()
+
+	
+
+def GetTranslate(query):
 	url = 'http://fanyi.youdao.com/openapi.do'
 	data = {
 		'keyfrom': KEYFROM,
@@ -19,16 +62,26 @@ def GetTranslate(txt):
 		'type': 'data',
 		'doctype': 'json',
 		'version': 1.1,
-		'q': txt
+		'q': query
 	}
 	data = parse.urlencode(data)
 	url = url+'?'+data
 	req = request.Request(url)
-	response = request.urlopen(req)
-	result = json.loads(response.read())
+	offline = False
+	try:
+		response = request.urlopen(req)
+	except error.URLError:
+		offline = True
+		result = GetTranslateFromFile(query)
+	if not offline:	
+		result = json.loads(response.read())
 	return result
 
 def Sjson(jsonData, cmdDict):
+	if None == jsonData:
+		print(u'单词没有找到翻译！\r\n')
+		return
+
 	query = jsonData.get('query', '')
 	translation = jsonData.get('translation', '')
 
@@ -56,29 +109,16 @@ def Sjson(jsonData, cmdDict):
 				values += i+','
 			seq_txt += values+'\n'
 
-	print_format = '*'*40+'\n'
+	print_format = ''
+	print_format += '*'*40+'\n'
 	print_format += u'查询对象： %s [%s]\n' %(query, phonetic)
 	print_format += explains_txt
 	print_format += '-'*20+'\n'+seq_txt
 	print_format += '*'*40+'\n'
-	print(print_format)
+	print(print_format, end='')
 
-	if not cmdDict['noSave']:
-		choices = 'y'
-		if not cmdDict['autoSave']:
-			choices = input(u'是否写入单词本，回复(y/n):')
-		if choices in ['y', 'Y']:
-			filepath = r'%s.xml' % datetime.date.today()
-			fp = open(filepath, 'a+')
-			file = fp.readlines()
-			if not file:
-				fp.write('<wordbook>\n')
-				fp.write(u"""    <item>\n    <word>%s</word>\n    <trans><![CDATA[%s]]></trans>\n    <phonetic><![CDATA[[%s]]]></phonetic>\n    <tags>%s</tags>\n    <progress>1</progress>\n    </item>\n\n""" \
-					%(query,log_word_explains,phonetic,datetime.date.today()))
-				fp.close()
-				print(u'写入单词本成功')	
-
-
+	SaveWordToFile(query, jsonData, cmdDict)
+		
 
 def Usage(cmdDict):
 	print('*' * 40)
@@ -89,7 +129,7 @@ def Usage(cmdDict):
 	print(u'3:不保存到单词本')
 	print(u'4:打开/关闭简洁模式 - 当前%s模式' \
 		%(u'打开' if cmdDict['simpleMode'] else u'关闭') )
-	print('*' * 40)
+	print('*' * 40 + '\r\n')
 
 def DecodeCommand(cmd, usageDict, cmdDict):
 	if 'showUsage' == usageDict[cmd]:
