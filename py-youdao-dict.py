@@ -6,53 +6,68 @@ from urllib import request
 from urllib import parse
 from urllib import error
 import simplejson as json
-import platform
-import datetime
 
 API_KEY = '1437381740'
 KEYFROM = 'py-youdao-dict'
 
-def GetTranslateFromFile(query):
-	filepath = r'py-youdao-dict.json'
-	fp = open(filepath, 'r')
+g_file = []
+
+def LoadSavedFile():
+	global g_file
+
+	try:
+		filepath = r'py-youdao-dict.json'
+		fp = open(filepath, 'r+')
+	except FileNotFoundError:
+		print(u'%s文件不存在' %filepath)	
+		return
 	fp.seek(os.SEEK_SET)
+	g_file = fp.readlines()
+	g_file.sort(key=lambda x:json.loads(x).get('query', ''))
+	#for line in file:
+	#	print(line)
+	fp.close()
+
+
+def GetTranslateFromFile(query):
+	global g_file
+
 	findWord = False
-	for wordSaved in fp:
+	for wordSaved in g_file:
 		jsonSaved = json.loads(wordSaved)
 		if query == jsonSaved.get('query', ''):
 			findWord = True
 			break
-	fp.close()
 	if findWord:	
 		return jsonSaved
 	else:
 		return None	
 
 def SaveWordToFile(query, jsonData, cmdDict):
+	global g_file
+
 	if not cmdDict['noSave']:
 		choices = 'y'
 		if not cmdDict['autoSave']:
 			choices = input(u'是否写入单词本，回复(y/n):')
 		if choices in ['y', 'Y']:
-			filepath = r'py-youdao-dict.json'
-			fp = open(filepath, 'a+')
 			alreadySaved = False
-			fp.seek(os.SEEK_SET)
-			for wordSaved in fp:
+			for wordSaved in g_file:
 				jsonSaved = json.loads(wordSaved)
 				if query == jsonSaved.get('query', ''):
 					alreadySaved = True
+					break
 
-			fp.seek(os.SEEK_END)
 			if alreadySaved:
 				print(u'单词已经在单词本\r\n')
 			else:
+				filepath = r'py-youdao-dict.json'
+				fp = open(filepath, 'a+')
 				fp.write(json.dumps(jsonData))
 				fp.write('\r\n')
 				print(u'写入单词本成功\r\n')
-			fp.close()
+				fp.close()
 
-	
 
 def GetTranslate(query):
 	url = 'http://fanyi.youdao.com/openapi.do'
@@ -149,7 +164,6 @@ def DecodeCommand(cmd, usageDict, cmdDict):
 
 
 def main():
-
 	usageDict = {
 		u'0': 'showUsage', 
 		u'1': 'quitProgram',
@@ -165,6 +179,7 @@ def main():
 		'simpleMode': False,
 	}	
 
+	LoadSavedFile()	
 	Usage(cmdDict)
 
 	while True:
