@@ -271,10 +271,12 @@ def main():
 			else:
 				correctTxt = spellCorrector.correct(txt) 
 				if correctTxt != txt:
-					print(u'您想要输入的是'+correctTxt+'吗(y/n)：')
+					print(u'您想要输入的是'+correctTxt+'吗(y/n/r)：')
 					correctChoice = input()
 					if correctChoice in ['y', 'Y']:
 						txt = correctTxt
+					elif correctChoice in ['r', 'R']:
+						continue
 				Sjson(GetTranslate(txt.lower()), cmdDict)
 
 if __name__ == '__main__':
