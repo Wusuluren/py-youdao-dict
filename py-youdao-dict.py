@@ -118,7 +118,7 @@ def GetTranslate(query):
 
 def Sjson(jsonData, cmdDict):
 	if None == jsonData:
-		print(u'单词没有找到翻译！\r\n')
+		print(u'单词本中没有收录该单词，请联网查询！\r\n')
 		return
 
 	query = jsonData.get('query', '')
