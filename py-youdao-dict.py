@@ -35,7 +35,7 @@ def LoadSavedFile():
 	for line in file:
 		currentQuery = json.loads(line).get('query', '')
 		setIdx = ord(currentQuery.lower()[0]) - ord('a')
-		g_fileSets[setIdx].append(line)
+		g_fileSets[setIdx].append(json.loads(line))
 
 	'''
 	for i in g_fileSets:
@@ -48,45 +48,44 @@ def LoadSavedFile():
 def GetTranslateFromFile(query):
 	global g_fileSets
 
+	query = query.lower()
 	findWord = False
-	setIdx = ord(query.lower()[0]) - ord('a')
+	setIdx = ord(query[0]) - ord('a')
 	if [] != g_fileSets[setIdx]:
 		for wordSaved in g_fileSets[setIdx]:
-			jsonSaved = json.loads(wordSaved)
-			if query == jsonSaved.get('query', ''):
+			if query == wordSaved.get('query', ''):
 				findWord = True
 				break
 			
 	if findWord:	
-		return jsonSaved
+		return wordSaved
 	else:
 		return None	
 
 def SaveWordToFile(query, jsonData, cmdDict):
 	global g_fileSets
 
+	query = query.lower()
 	if not cmdDict['noSave']:
 		choices = 'y'
 		if not cmdDict['autoSave']:
 			choices = input(u'是否写入单词本，回复(y/n):')
 		if choices in ['y', 'Y']:
 			alreadySaved = False
-			setIdx = ord(query.lower()[0]) - ord('a')
+			setIdx = ord(query[0]) - ord('a')
 			#print(g_fileSets[setIdx])
 			if [] == g_fileSets[setIdx]:
-				g_fileSets[setIdx].append(json.dumps(jsonData))
+				g_fileSets[setIdx].append(jsonData)
 			else:	
 				for wordSaved in g_fileSets[setIdx]:
-					#print(wordSaved)
-					jsonSaved = json.loads(wordSaved)
-					if query == jsonSaved.get('query', ''):
+					if query == wordSaved.get('query', ''):
 						alreadySaved = True
-						g_fileSets[setIdx].append(json.dumps(jsonData)+'\r\n')
 						break
 
 			if alreadySaved:
 				print(u'单词已经在单词本\r\n')
 			else:
+				g_fileSets[setIdx].append(jsonData)
 				filepath = r'py-youdao-dict.json'
 				fp = open(filepath, 'a+')
 				fp.write(json.dumps(jsonData))
@@ -96,6 +95,7 @@ def SaveWordToFile(query, jsonData, cmdDict):
 
 
 def GetTranslate(query):
+	query = query.lower()
 	url = 'http://fanyi.youdao.com/openapi.do'
 	data = {
 		'keyfrom': KEYFROM,
