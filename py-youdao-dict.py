@@ -6,6 +6,8 @@ from urllib import request
 from urllib import parse
 from urllib import error
 import simplejson as json
+import re
+import time
 
 API_KEY = '1437381740'
 KEYFROM = 'py-youdao-dict'
@@ -32,7 +34,7 @@ def LoadSavedFile():
 	
 	for line in file:
 		currentQuery = json.loads(line).get('query', '')
-		setIdx = ord(currentQuery[0]) - ord('a')
+		setIdx = ord(currentQuery.lower()[0]) - ord('a')
 		g_fileSets[setIdx].append(line)
 
 	'''
@@ -47,7 +49,7 @@ def GetTranslateFromFile(query):
 	global g_fileSets
 
 	findWord = False
-	setIdx = ord(query[0]) - ord('a')
+	setIdx = ord(query.lower()[0]) - ord('a')
 	if [] != g_fileSets[setIdx]:
 		for wordSaved in g_fileSets[setIdx]:
 			jsonSaved = json.loads(wordSaved)
@@ -69,7 +71,7 @@ def SaveWordToFile(query, jsonData, cmdDict):
 			choices = input(u'是否写入单词本，回复(y/n):')
 		if choices in ['y', 'Y']:
 			alreadySaved = False
-			setIdx = ord(query[0]) - ord('a')
+			setIdx = ord(query.lower()[0]) - ord('a')
 			#print(g_fileSets[setIdx])
 			if [] == g_fileSets[setIdx]:
 				g_fileSets[setIdx].append(json.dumps(jsonData))
@@ -186,6 +188,22 @@ def DecodeCommand(cmd, usageDict, cmdDict):
 			cmdDict['autoSave'] = False
 			cmdDict['noSave'] = True	
 
+def WordbookSample(cmdDict):
+	with open('wordbook-sample.txt', 'r') as fp:
+		print(u'单词本开始收录')	
+		file = fp.readlines()
+		txtCounter = 0
+		for line in file:
+			wordbookSample = list(filter(lambda x:x!= '', re.split(r'[^a-zA-Z]+', line)))
+			for txt in wordbookSample:
+				txtCounter += 1
+				if 0 == (txtCounter & 15):
+					time.sleep(1)
+				#使用API查询，请求频率限制为每小时1000次，超过限制会被封禁	
+				if txtCounter >= 900:
+					return	
+				Sjson(GetTranslate(txt.lower()), cmdDict)
+		print(u'单词本收录完毕')	
 
 
 def main():
@@ -205,6 +223,9 @@ def main():
 	}	
 
 	LoadSavedFile()	
+	#WordbookSample(cmdDict)
+	#return
+
 	Usage(cmdDict)
 
 	while True:
@@ -213,7 +234,7 @@ def main():
 			if txt in usageDict:
 				DecodeCommand(txt, usageDict, cmdDict)
 			else:
-				Sjson(GetTranslate(txt), cmdDict)
+				Sjson(GetTranslate(txt.lower()), cmdDict)
 
 if __name__ == '__main__':
 	main()
