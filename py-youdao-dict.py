@@ -10,10 +10,12 @@ import simplejson as json
 API_KEY = '1437381740'
 KEYFROM = 'py-youdao-dict'
 
-g_file = []
+global g_fileSets
+
+g_fileSets = [[] for i in range(26)]
 
 def LoadSavedFile():
-	global g_file
+	global g_fileSets
 
 	try:
 		filepath = r'py-youdao-dict.json'
@@ -22,29 +24,44 @@ def LoadSavedFile():
 		print(u'%s文件不存在' %filepath)	
 		return
 	fp.seek(os.SEEK_SET)
-	g_file = fp.readlines()
-	g_file.sort(key=lambda x:json.loads(x).get('query', ''))
+	file = fp.readlines()
+	file.sort(key=lambda x:json.loads(x).get('query', ''))
 	#for line in file:
 	#	print(line)
 	fp.close()
+	
+	for line in file:
+		currentQuery = json.loads(line).get('query', '')
+		setIdx = ord(currentQuery[0]) - ord('a')
+		g_fileSets[setIdx].append(line)
 
+	'''
+	for i in g_fileSets:
+		if i != []:
+			print('*' * 40)
+			for j in i:
+				print(j)
+	'''
 
 def GetTranslateFromFile(query):
-	global g_file
+	global g_fileSets
 
 	findWord = False
-	for wordSaved in g_file:
-		jsonSaved = json.loads(wordSaved)
-		if query == jsonSaved.get('query', ''):
-			findWord = True
-			break
+	setIdx = ord(query[0]) - ord('a')
+	if [] != g_fileSets[setIdx]:
+		for wordSaved in g_fileSets[setIdx]:
+			jsonSaved = json.loads(wordSaved)
+			if query == jsonSaved.get('query', ''):
+				findWord = True
+				break
+			
 	if findWord:	
 		return jsonSaved
 	else:
 		return None	
 
 def SaveWordToFile(query, jsonData, cmdDict):
-	global g_file
+	global g_fileSets
 
 	if not cmdDict['noSave']:
 		choices = 'y'
@@ -52,11 +69,18 @@ def SaveWordToFile(query, jsonData, cmdDict):
 			choices = input(u'是否写入单词本，回复(y/n):')
 		if choices in ['y', 'Y']:
 			alreadySaved = False
-			for wordSaved in g_file:
-				jsonSaved = json.loads(wordSaved)
-				if query == jsonSaved.get('query', ''):
-					alreadySaved = True
-					break
+			setIdx = ord(query[0]) - ord('a')
+			#print(g_fileSets[setIdx])
+			if [] == g_fileSets[setIdx]:
+				g_fileSets[setIdx].append(json.dumps(jsonData))
+			else:	
+				for wordSaved in g_fileSets[setIdx]:
+					#print(wordSaved)
+					jsonSaved = json.loads(wordSaved)
+					if query == jsonSaved.get('query', ''):
+						alreadySaved = True
+						g_fileSets[setIdx].append(json.dumps(jsonData)+'\r\n')
+						break
 
 			if alreadySaved:
 				print(u'单词已经在单词本\r\n')
@@ -65,8 +89,8 @@ def SaveWordToFile(query, jsonData, cmdDict):
 				fp = open(filepath, 'a+')
 				fp.write(json.dumps(jsonData))
 				fp.write('\r\n')
-				print(u'写入单词本成功\r\n')
 				fp.close()
+				print(u'写入单词本成功\r\n')
 
 
 def GetTranslate(query):
@@ -99,13 +123,14 @@ def Sjson(jsonData, cmdDict):
 
 	query = jsonData.get('query', '')
 	translation = jsonData.get('translation', '')
-
 	basic = jsonData.get('basic', '')
+	if basic == '':
+		print(u'查询单词出现错误')
+		return
 
 	sequence = ''
 	if not cmdDict['simpleMode']:	
-		sequence = jsonData.get('web', [])
-	
+		sequence = jsonData.get('web', [])	
 	phonetic, explains_txt, seq_txt, log_word_explains = \
 		'', '', '', ''
 
