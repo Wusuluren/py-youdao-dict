@@ -9,8 +9,30 @@ import simplejson as json
 import re
 import time
 import collections
+from tkinter import *
 
-class SpellCorrector(object):
+class Application(object):
+    def __init__(self):
+        self.top = Tk()
+        self.top.title('Hello')
+        self.CreateWidgets()
+        self.top.mainloop()
+
+    def CreateWidgets(self):
+        self.userText = Entry(self.top)
+        self.userText.grid(row=0, column=0)
+
+        self.searchButton = Button(self.top, text=u'查询', command=self.Search)
+        self.searchButton.grid(row=0, column=1)
+
+        self.translateText = Text(self.top)
+        self.translateText.grid(row=1, column=0, columnspan=2)
+
+    def Search(self):
+        self.translateText.delete(0.0, END)
+        self.translateText.insert(0.0, 'Hello')
+
+ class SpellCorrector(object):
 	def __init__(self):
 		self.NWORDS = self.train(self.words(open('big.txt', 'r').read()))
 		self.alphabet = 'abcdefghijklmnopqrstuvwxyz'
@@ -251,6 +273,8 @@ def WordbookSample(cmdDict):
 
 
 def main():
+	app = Application()
+	
 	usageDict = {
 		u'0': 'showUsage', 
 		u'1': 'quitProgram',
