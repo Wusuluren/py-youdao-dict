@@ -42,6 +42,17 @@ class SpellCorrector(object):
 		candidates = self.known([word]) or self.known(self.edits1(word)) or self.known_edits2(word) or [word]
 		return max(candidates, key=self.NWORDS.get)
 
+class Predictor(object):
+	def __init__(self):
+		with open('big.txt', 'r') as f:
+			self.model = self.SetModel(f.read().lower())
+	
+	def Predict(self, txt):
+		return re.findall(txt+'[a-z]+', self.model)[0]
+
+	def SetModel(self, text):
+		return text
+
 API_KEY = '1437381740'
 KEYFROM = 'py-youdao-dict'
 
@@ -256,6 +267,9 @@ def main():
 	}	
 
 	spellCorrector = SpellCorrector()
+
+	predictor = Predictor()
+	print(predictor.Predict('hel'))
 
 	LoadSavedFile()	
 	#WordbookSample(cmdDict)
