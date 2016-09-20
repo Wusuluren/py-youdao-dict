@@ -15,9 +15,6 @@ from tkinter import *
 #GUI程序
 class Application(object):
 	def __init__(self):
-		self.top = Tk()
-		self.top.wm_attributes('-topmost', 1)
-		self.top.title('py-youdao-dict')
 		self.InitApp()
 		self.CreateWidgets()
 		self.top.mainloop()
@@ -30,46 +27,104 @@ class Application(object):
 		self.spellCorrector = SpellCorrector()
 		self.predictor = Predictor()
 		self.fileSets = [[] for i in range(26)]
-		self.userText = StringVar()
+		self.listboxIdx = -1
 
 		self.LoadSavedFile()
 
 	def CreateWidgets(self):
-		self.userTextEntry = Entry(self.top, vcmd=self.userTextChanged, textvariable=self.userText)
-		self.userTextEntry.grid(row=0, column=0)
+		self.top = Tk()
+		self.top.wm_attributes('-topmost', 1)
+		self.top.title('py-youdao-dict')
+
+		self.inputFrame = Frame(self.top)
+		self.inputFrame.pack()
+
+		self.userText = StringVar()
+		self.userTextEntry = Entry(self.inputFrame, vcmd=self.userTextChanged, textvariable=self.userText)
+		self.userTextEntry.pack()
+		#self.userTextEntry.grid(row=0, column=0)
 		self.userTextEntry.bind('<Key>', self.userTextChanged)
 
-		self.searchButton = Button(self.top, text=u'查询', command=self.Search)
-		self.searchButton.grid(row=0, column=1)
+		self.searchButton = Button(self.inputFrame, text=u'查询', command=self.Search)
+		self.searchButton.pack()
+		#self.searchButton.grid(row=0, column=1)
 
-		self.translateText = Text(self.top, width=60, height=20)
-		self.translateText.grid(row=1, column=0, columnspan=2)
+		self.translateFrame = Frame(self.top)
+		#self.translateFrame.pack()
+
+		self.translateText = Text(self.translateFrame, width=60, height=20)
+		self.translateText.pack()
+		#self.translateText.grid(row=1, column=0, columnspan=2)
+
+		self.userTextPredictListbox = Listbox(self.inputFrame)
 
 	def userTextChanged(self, event):
+		predictFlag = False
 		idx = self.userTextEntry.index(INSERT)-1
+		listboxLines = self.userTextPredictListbox.size()
 
 		#print(event.char, event.keycode)
-		if event.keycode == 22:	#Backspace
-			t = self.userText.get()[:idx] + self.userText.get()[idx+1:]
-			#self.userText.set(self.userText.get()[:-1])
-		elif event.keycode == 119:
-			t = self.userText.get()[:idx+1] + self.userText.get()[idx+2:]
+		if event.keycode == 22:		#Backspace
+			self.currentText = self.userText.get()[:idx] + self.userText.get()[idx+1:]
+			predictFlag = True
+		elif event.keycode == 119:	#Delete
+			self.currentText = self.userText.get()[:idx+1] + self.userText.get()[idx+2:]
+			predictFlag = True
 		elif event.keycode == 36:	#Enter
-			pass	
+			self.Search()
 		elif event.keycode == 111:	#Up
-			pass
+			if self.listboxIdx > 0:
+				self.listboxIdx -= 1
+				self.userTextPredictListbox.activate(self.listboxIdx)
+				t = self.userTextPredictListbox.get(self.listboxIdx)
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, t)
+			else:
+				self.listboxIdx = listboxLines	
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, self.currentText)
 		elif event.keycode == 116:	#Down	
-			pass
+			if self.listboxIdx < listboxLines-1:
+				self.listboxIdx += 1
+				self.userTextPredictListbox.activate(self.listboxIdx)
+				t = self.userTextPredictListbox.get(self.listboxIdx)
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, t)
+			elif self.listboxIdx == listboxLines-1:
+				self.listboxIdx += 1
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, self.currentText)
+			elif self.listboxIdx == listboxLines:
+				self.listboxIdx = 0	
+				self.userTextPredictListbox.activate(self.listboxIdx)
+				t = self.userTextPredictListbox.get(self.listboxIdx)
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, t)
 		elif event.char in string.ascii_lowercase:
-			t = self.userText.get() + event.char
-			dt = t
+			self.currentText = self.userText.get() + event.char
+			predictFlag = True
 
-		print(t)	
-		print('+++' + self.predictor.Predict(t))
-		predictText = self.predictor.Predict(t)
+		if predictFlag:	
+			predictText = self.predictor.Predict(self.currentText)
+			#print(self.currentText)	
+			#print(predictText)
+
+			self.translateFrame.pack()
+			self.userTextPredictListbox.pack()
+			self.userTextPredictListbox.delete(0, listboxLines)
+			line = 0
+			for predict in predictText:
+				self.userTextPredictListbox.insert(line, predict)
+				line += 1
 
 
 	def Search(self):
+		listboxLines = self.userTextPredictListbox.size()
+		self.listboxIdx = 0
+		self.userTextPredictListbox.delete(0, listboxLines)
+		self.userTextPredictListbox.forget()
+
+
 		#print(self.userText.get())
 		txt = self.userTextEntry.get().lower()
 		translate = self.Sjson(self.GetTranslate(txt))
@@ -267,10 +322,14 @@ class Predictor(object):
 	def __init__(self):
 		with open('big.txt', 'r') as f:
 			self.model = self.SetModel(f.read().lower())
+			#self.model = str(set(self.model))
+			#print(type(self.model))
 	
 	def Predict(self, txt):
 		predictText = re.findall(txt+'[a-z]+', self.model)
-		return predictText[0] if predictText else '' 
+		#return predictText[0] if predictText else ''
+		predictText = list(set(predictText))
+		return predictText[0:5] if len(predictText) > 5 else predictText
 
 	def SetModel(self, text):
 		return text
