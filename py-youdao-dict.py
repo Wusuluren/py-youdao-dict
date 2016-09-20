@@ -41,22 +41,25 @@ class Application(object):
 
 		self.userText = StringVar()
 		self.userTextEntry = Entry(self.inputFrame, vcmd=self.userTextChanged, textvariable=self.userText)
-		self.userTextEntry.pack()
-		#self.userTextEntry.grid(row=0, column=0)
+		#self.userTextEntry.pack()
+		self.userTextEntry.grid(row=0, column=0)
 		self.userTextEntry.bind('<Key>', self.userTextChanged)
 
 		self.searchButton = Button(self.inputFrame, text=u'查询', command=self.Search)
-		self.searchButton.pack()
-		#self.searchButton.grid(row=0, column=1)
+		#self.searchButton.pack()
+		self.searchButton.grid(row=0, column=1)
 
 		self.translateFrame = Frame(self.top)
 		#self.translateFrame.pack()
 
 		self.translateText = Text(self.translateFrame, width=60, height=20)
-		self.translateText.pack()
-		#self.translateText.grid(row=1, column=0, columnspan=2)
+		#self.translateText.pack()
+		self.translateText.grid(row=1, column=0, columnspan=2)
 
-		self.userTextPredictListbox = Listbox(self.inputFrame)
+		self.predictFrame = Frame(self.top)
+		#self.predictFrame.pack()
+		self.userTextPredictListbox = Listbox(self.predictFrame)
+		self.userTextPredictListbox.grid(row=0, column=0)
 
 	def userTextChanged(self, event):
 		predictFlag = False
@@ -65,11 +68,27 @@ class Application(object):
 
 		#print(event.char, event.keycode)
 		if event.keycode == 22:		#Backspace
+			self.translateFrame.forget()
+			self.translateText.forget()
+
 			self.currentText = self.userText.get()[:idx] + self.userText.get()[idx+1:]
-			predictFlag = True
+			if self.currentText:
+				predictFlag = True
+			else:
+				self.userTextPredictListbox.delete(0, listboxLines)
+				self.userTextPredictListbox.forget()
+				self.predictFrame.forget()
 		elif event.keycode == 119:	#Delete
+			self.translateFrame.forget()
+			self.translateText.forget()
+
 			self.currentText = self.userText.get()[:idx+1] + self.userText.get()[idx+2:]
-			predictFlag = True
+			if self.currentText:
+				predictFlag = True
+			else:
+				self.userTextPredictListbox.delete(0, listboxLines)
+				self.userTextPredictListbox.forget()
+				self.predictFrame.forget()
 		elif event.keycode == 36:	#Enter
 			self.Search()
 		elif event.keycode == 111:	#Up
@@ -109,7 +128,7 @@ class Application(object):
 			#print(self.currentText)	
 			#print(predictText)
 
-			self.translateFrame.pack()
+			self.predictFrame.pack()
 			self.userTextPredictListbox.pack()
 			self.userTextPredictListbox.delete(0, listboxLines)
 			line = 0
@@ -117,19 +136,21 @@ class Application(object):
 				self.userTextPredictListbox.insert(line, predict)
 				line += 1
 
-
 	def Search(self):
 		listboxLines = self.userTextPredictListbox.size()
 		self.listboxIdx = 0
 		self.userTextPredictListbox.delete(0, listboxLines)
 		self.userTextPredictListbox.forget()
+		self.predictFrame.forget()
 
-
-		#print(self.userText.get())
 		txt = self.userTextEntry.get().lower()
 		translate = self.Sjson(self.GetTranslate(txt))
+		
 		self.translateText.delete(0.0, END)
 		self.translateText.insert(0.0, translate)
+
+		self.translateFrame.pack()
+		self.translateText.pack()
 
 	def LoadSavedFile(self):
 		try:
