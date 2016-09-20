@@ -9,6 +9,7 @@ import simplejson as json
 import re
 import time
 import collections
+import string
 from tkinter import *
 
 #GUI程序
@@ -17,8 +18,8 @@ class Application(object):
 		self.top = Tk()
 		self.top.wm_attributes('-topmost', 1)
 		self.top.title('py-youdao-dict')
-		self.CreateWidgets()
 		self.InitApp()
+		self.CreateWidgets()
 		self.top.mainloop()
 
 	def InitApp(self):
@@ -29,21 +30,48 @@ class Application(object):
 		self.spellCorrector = SpellCorrector()
 		self.predictor = Predictor()
 		self.fileSets = [[] for i in range(26)]
+		self.userText = StringVar()
 
 		self.LoadSavedFile()
 
 	def CreateWidgets(self):
-		self.userText = Entry(self.top)
-		self.userText.grid(row=0, column=0)
+		self.userTextEntry = Entry(self.top, vcmd=self.userTextChanged, textvariable=self.userText)
+		self.userTextEntry.grid(row=0, column=0)
+		self.userTextEntry.bind('<Key>', self.userTextChanged)
 
 		self.searchButton = Button(self.top, text=u'查询', command=self.Search)
 		self.searchButton.grid(row=0, column=1)
 
-		self.translateText = Text(self.top)
+		self.translateText = Text(self.top, width=60, height=20)
 		self.translateText.grid(row=1, column=0, columnspan=2)
 
+	def userTextChanged(self, event):
+		idx = self.userTextEntry.index(INSERT)-1
+
+		#print(event.char, event.keycode)
+		if event.keycode == 22:	#Backspace
+			t = self.userText.get()[:idx] + self.userText.get()[idx+1:]
+			#self.userText.set(self.userText.get()[:-1])
+		elif event.keycode == 119:
+			t = self.userText.get()[:idx+1] + self.userText.get()[idx+2:]
+		elif event.keycode == 36:	#Enter
+			pass	
+		elif event.keycode == 111:	#Up
+			pass
+		elif event.keycode == 116:	#Down	
+			pass
+		elif event.char in string.ascii_lowercase:
+			t = self.userText.get() + event.char
+			dt = t
+
+		print(t)	
+		print('+++' + self.predictor.Predict(t))
+		predictText = self.predictor.Predict(t)
+
+
 	def Search(self):
-		txt = self.userText.get().lower()
+		#print(self.userText.get())
+		txt = self.userTextEntry.get().lower()
 		translate = self.Sjson(self.GetTranslate(txt))
 		self.translateText.delete(0.0, END)
 		self.translateText.insert(0.0, translate)
@@ -142,14 +170,12 @@ class Application(object):
 
 	def Sjson(self, jsonData):
 		if None == jsonData:
-			#print(u'单词本中没有收录该单词，请联网查询！\r\n')
 			return u'单词本中没有收录该单词，请联网查询！\r\n'
 
 		query = jsonData.get('query', '')
 		translation = jsonData.get('translation', '')
 		basic = jsonData.get('basic', '')
 		if basic == '':
-			#print(u'查询单词出现错误')
 			return u'查询单词出现错误'
 
 		sequence = jsonData.get('web', [])	
@@ -243,7 +269,8 @@ class Predictor(object):
 			self.model = self.SetModel(f.read().lower())
 	
 	def Predict(self, txt):
-		return re.findall(txt+'[a-z]+', self.model)[0]
+		predictText = re.findall(txt+'[a-z]+', self.model)
+		return predictText[0] if predictText else '' 
 
 	def SetModel(self, text):
 		return text
