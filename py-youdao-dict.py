@@ -67,7 +67,8 @@ class Application(object):
 		listboxLines = self.userTextPredictListbox.size()
 
 		#print(event.char, event.keycode)
-		if event.keycode == 22:		#Backspace
+		print(event.keysym, event.char, event.keycode)
+		if event.keysym == 'BackSpace':
 			self.translateFrame.forget()
 			self.translateText.forget()
 
@@ -78,7 +79,7 @@ class Application(object):
 				self.userTextPredictListbox.delete(0, listboxLines)
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
-		elif event.keycode == 119:	#Delete
+		elif event.keysym == 'Delete':
 			self.translateFrame.forget()
 			self.translateText.forget()
 
@@ -89,9 +90,9 @@ class Application(object):
 				self.userTextPredictListbox.delete(0, listboxLines)
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
-		elif event.keycode == 36:	#Enter
+		elif event.keysym == 'Enter':
 			self.Search()
-		elif event.keycode == 111:	#Up
+		elif event.keysym == 'Up':
 			if self.listboxIdx > 0:
 				self.listboxIdx -= 1
 				self.userTextPredictListbox.activate(self.listboxIdx)
@@ -102,7 +103,7 @@ class Application(object):
 				self.listboxIdx = listboxLines	
 				self.userTextEntry.delete(0, END)
 				self.userTextEntry.insert(0, self.currentText)
-		elif event.keycode == 116:	#Down	
+		elif event.keysym == 'Down':
 			if self.listboxIdx < listboxLines-1:
 				self.listboxIdx += 1
 				self.userTextPredictListbox.activate(self.listboxIdx)
@@ -119,7 +120,7 @@ class Application(object):
 				t = self.userTextPredictListbox.get(self.listboxIdx)
 				self.userTextEntry.delete(0, END)
 				self.userTextEntry.insert(0, t)
-		elif event.char in string.ascii_lowercase:
+		elif event.keysym in string.ascii_lowercase:
 			self.currentText = self.userText.get() + event.char
 			predictFlag = True
 
