@@ -90,7 +90,7 @@ class Application(object):
 				self.userTextPredictListbox.delete(0, listboxLines)
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
-		elif event.keysym == 'Enter':
+		elif event.keysym == 'Return':
 			self.Search()
 		elif event.keysym == 'Up':
 			if self.listboxIdx > 0:
