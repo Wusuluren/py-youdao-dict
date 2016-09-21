@@ -44,6 +44,7 @@ class Application(object):
 		#self.userTextEntry.pack()
 		self.userTextEntry.grid(row=0, column=0)
 		self.userTextEntry.bind('<Key>', self.userTextChanged)
+		self.userTextEntry.focus_set()
 
 		self.searchButton = Button(self.inputFrame, text=u'查询', command=self.Search)
 		#self.searchButton.pack()
