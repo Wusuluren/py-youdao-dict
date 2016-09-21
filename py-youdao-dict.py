@@ -364,7 +364,9 @@ class Predictor(object):
 		predictText = re.findall(txt+'[a-z]*', str(self.text))
 		predictText = list(set(predictText))
 		# predictText.sort()
-		predictText.sort(key=lambda x:self.model[x])
+		predictText.sort(key=lambda x:self.model[x], reverse=True)
+		for x in predictText:
+			print(self.model[x])
 		return predictText[0:5] if len(predictText) > 5 else predictText
 		
 
