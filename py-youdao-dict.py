@@ -223,8 +223,8 @@ class Application(object):
 				self.fileSets[setIdx].append(jsonData)
 				filepath = r'py-youdao-dict.json'
 				fp = open(filepath, 'a+')
-				fp.write(json.dumps(jsonData))
-				fp.write('\r\n')
+				fp.write(json.dumps(jsonData)+'\n')
+				#fp.write('\r\n')
 				fp.close()
 				print(u'写入单词本成功\r\n')
 
