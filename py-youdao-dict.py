@@ -29,6 +29,7 @@ class Application(object):
 		self.fileSets = [[] for i in range(26)]
 		self.listboxIdx = -1
 		self.currentText = ''
+		self.correctUserInput = ''
 
 		self.LoadSavedFile()
 
@@ -39,29 +40,37 @@ class Application(object):
 
 		self.inputFrame = Frame(self.top)
 		self.inputFrame.pack()
-
 		self.userText = StringVar()
 		self.userTextEntry = Entry(self.inputFrame, vcmd=self.userTextChanged, textvariable=self.userText)
-		#self.userTextEntry.pack()
 		self.userTextEntry.grid(row=0, column=0)
 		self.userTextEntry.bind('<Key>', self.userTextChanged)
 		self.userTextEntry.focus_set()
-
 		self.searchButton = Button(self.inputFrame, text=u'查询', command=self.Search)
-		#self.searchButton.pack()
 		self.searchButton.grid(row=0, column=1)
 
 		self.translateFrame = Frame(self.top)
-		#self.translateFrame.pack()
-
 		self.translateText = Text(self.translateFrame, width=60, height=20)
-		#self.translateText.pack()
-		self.translateText.grid(row=1, column=0, columnspan=2)
+		# self.translateText.grid(row=1, column=0, columnspan=2)
+		self.translateText.grid(row=0, column=0)
 
 		self.predictFrame = Frame(self.top)
-		#self.predictFrame.pack()
 		self.userTextPredictListbox = Listbox(self.predictFrame)
 		self.userTextPredictListbox.grid(row=0, column=0)
+
+		self.correctFrame = Frame(self.top)
+		self.correctUserInput = StringVar()
+		self.correctEntry = Entry(self.correctFrame, vcmd=self.correctGetInput, textvariable=self.correctUserInput)
+		self.correctEntry.grid(row=0, column=0)
+		self.correctEntry.bind('<Key>', self.correctGetInput)
+
+	def correctGetInput(self, event):
+		# txt = self.correctUserInput.get()
+		if event.keysym in ['y', 'Y']:
+			self.correctInput = True
+		elif event.keysym in ['n', 'N']:
+			self.correctInput = False
+		# self.correctEntry.delete(0, END)
+		# self.correctEntry.insert(0, txt)	
 
 	def userTextChanged(self, event):
 		predictFlag = False
@@ -150,13 +159,31 @@ class Application(object):
 		if not self.currentText:
 			return
 
-		listboxLines = self.userTextPredictListbox.size()
 		self.listboxIdx = -1
+		listboxLines = self.userTextPredictListbox.size()
 		self.userTextPredictListbox.delete(0, listboxLines)
 		self.userTextPredictListbox.forget()
 		self.predictFrame.forget()
 
 		txt = self.userTextEntry.get().lower()
+		correctTxt = self.spellCorrector.correct(txt)
+		if txt != correctTxt:
+			self.correctFrame.pack()
+			self.correctEntry.delete(0, END)
+			self.correctEntry.insert(0, u'您是否想要输入'+correctTxt+'?(y/n)')
+			self.correctEntry.pack()
+			self.correctEntry.focus_set()
+			while True:
+				self.correctEntry.wait_variable(self.correctUserInput)
+				if self.correctInput:
+					txt = correctTxt
+					break
+				elif not self.correctInput:
+					break
+			self.correctEntry.forget()
+			self.correctFrame.forget()
+			self.userTextEntry.focus_set()	
+		
 		translate = self.Sjson(self.GetTranslate(txt))
 		
 		self.translateText.delete(0.0, END)
@@ -164,7 +191,7 @@ class Application(object):
 
 		self.translateFrame.pack()
 		self.translateText.pack()
-
+		
 	def LoadSavedFile(self):
 		try:
 			filepath = r'py-youdao-dict.json'
