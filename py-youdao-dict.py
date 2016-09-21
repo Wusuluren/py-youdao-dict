@@ -68,6 +68,7 @@ class Application(object):
 
 		#print(event.keysym, event.char, event.keycode)
 		if event.keysym == 'BackSpace':
+			self.listboxIdx = -1
 			self.translateFrame.forget()
 			self.translateText.forget()
 
@@ -79,6 +80,7 @@ class Application(object):
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
 		elif event.keysym == 'Delete':
+			self.listboxIdx = -1
 			self.translateFrame.forget()
 			self.translateText.forget()
 
@@ -98,10 +100,16 @@ class Application(object):
 				t = self.userTextPredictListbox.get(self.listboxIdx)
 				self.userTextEntry.delete(0, END)
 				self.userTextEntry.insert(0, t)
-			else:
+			elif self.listboxIdx == 0:
 				self.listboxIdx = listboxLines	
 				self.userTextEntry.delete(0, END)
 				self.userTextEntry.insert(0, self.currentText)
+			elif self.listboxIdx == -1:
+				self.listboxIdx = listboxLines-1
+				self.userTextPredictListbox.activate(self.listboxIdx)
+				t = self.userTextPredictListbox.get(self.listboxIdx)
+				self.userTextEntry.delete(0, END)
+				self.userTextEntry.insert(0, t)
 		elif event.keysym == 'Down':
 			if self.listboxIdx < listboxLines-1:
 				self.listboxIdx += 1
@@ -138,7 +146,7 @@ class Application(object):
 
 	def Search(self):
 		listboxLines = self.userTextPredictListbox.size()
-		self.listboxIdx = 0
+		self.listboxIdx = -1
 		self.userTextPredictListbox.delete(0, listboxLines)
 		self.userTextPredictListbox.forget()
 		self.predictFrame.forget()
