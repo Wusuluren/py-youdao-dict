@@ -28,6 +28,7 @@ class Application(object):
 		self.predictor = Predictor()
 		self.fileSets = [[] for i in range(26)]
 		self.listboxIdx = -1
+		self.currentText = ''
 
 		self.LoadSavedFile()
 
@@ -134,7 +135,7 @@ class Application(object):
 
 		if predictFlag:	
 			predictText = self.predictor.Predict(self.currentText)
-			#print(self.currentText)	
+			#print(self.currentText)
 			#print(predictText)
 
 			self.predictFrame.pack()
@@ -146,6 +147,9 @@ class Application(object):
 				line += 1
 
 	def Search(self):
+		if not self.currentText:
+			return
+
 		listboxLines = self.userTextPredictListbox.size()
 		self.listboxIdx = -1
 		self.userTextPredictListbox.delete(0, listboxLines)
@@ -318,7 +322,7 @@ class Application(object):
 class SpellCorrector(object):
 	def __init__(self):
 		self.NWORDS = self.train(self.words(open('big.txt', 'r').read()))
-		self.alphabet = 'abcdefghijklmnopqrstuvwxyz'
+		self.alphabet = string.ascii_lowercase
 
 	def words(self, text): 
 		return re.findall('[a-z]+', text.lower()) 
@@ -351,18 +355,17 @@ class SpellCorrector(object):
 class Predictor(object):
 	def __init__(self):
 		with open('big.txt', 'r') as f:
-			self.model = self.SetModel(f.read().lower())
-			#self.model = str(set(self.model))
-			#print(type(self.model))
+			self.model = collections.defaultdict(lambda: 1)
+			self.text = re.findall('[a-z]+', f.read().lower())
+			for word in self.text:
+				self.model[word] += 1
 	
 	def Predict(self, txt):
-		predictText = re.findall(txt+'[a-z]+', self.model)
-		#return predictText[0] if predictText else ''
+		predictText = re.findall(txt+'[a-z]*', str(self.text))
 		predictText = list(set(predictText))
+		# predictText.sort()
+		predictText.sort(key=lambda x:self.model[x])
 		return predictText[0:5] if len(predictText) > 5 else predictText
-
-	def SetModel(self, text):
-		return text
 		
 
 
