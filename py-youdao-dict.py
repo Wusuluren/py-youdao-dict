@@ -66,8 +66,7 @@ class Application(object):
 		idx = self.userTextEntry.index(INSERT)-1
 		listboxLines = self.userTextPredictListbox.size()
 
-		#print(event.char, event.keycode)
-		print(event.keysym, event.char, event.keycode)
+		#print(event.keysym, event.char, event.keycode)
 		if event.keysym == 'BackSpace':
 			self.translateFrame.forget()
 			self.translateText.forget()
