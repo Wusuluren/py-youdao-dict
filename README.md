@@ -1,5 +1,5 @@
 # py-youdao-dict
-A simple dictionary software using Youdao API
+A simple dictionary software using Youdao API  
 With spelling corrector
 
 ---
