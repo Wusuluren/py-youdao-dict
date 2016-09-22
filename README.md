@@ -4,5 +4,4 @@ With spelling corrector
 
 ---
 # TODO:
-    1. Add spelling corrector
-    2. Add Chinese translate
+    1. Add Chinese translate
