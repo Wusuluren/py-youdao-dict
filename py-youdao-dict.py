@@ -84,6 +84,7 @@ class Application(object):
 			self.translateText.forget()
 
 			self.currentText = self.userText.get()[:idx] + self.userText.get()[idx+1:]
+			#print('---:'+self.currentText)
 			if self.currentText:
 				predictFlag = True
 			else:
@@ -147,13 +148,19 @@ class Application(object):
 			#print(self.currentText)
 			#print(predictText)
 
-			self.predictFrame.pack()
-			self.userTextPredictListbox.pack()
-			self.userTextPredictListbox.delete(0, listboxLines)
-			line = 0
-			for predict in predictText:
-				self.userTextPredictListbox.insert(line, predict)
-				line += 1
+			if predictText:
+				self.predictFrame.pack()
+				self.userTextPredictListbox.pack()
+				self.userTextPredictListbox.delete(0, listboxLines)
+				line = 0
+				for predict in predictText:
+					self.userTextPredictListbox.insert(line, predict)
+					line += 1
+			else:
+				listboxLines = self.userTextPredictListbox.size()
+				self.userTextPredictListbox.delete(0, listboxLines)
+				self.userTextPredictListbox.forget()
+				self.predictFrame.forget()
 
 	def Search(self):
 		if not self.currentText:
