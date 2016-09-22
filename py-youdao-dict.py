@@ -184,6 +184,8 @@ class Application(object):
 				self.correctEntry.wait_variable(self.correctUserInput)
 				if self.correctInput:
 					txt = correctTxt
+					self.userTextEntry.delete(0, END)
+					self.userTextEntry.insert(0, txt)
 					break
 				elif not self.correctInput:
 					break
