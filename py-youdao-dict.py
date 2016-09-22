@@ -151,6 +151,7 @@ class Application(object):
 			if predictText:
 				self.predictFrame.pack()
 				self.userTextPredictListbox.pack()
+				self.userTextPredictListbox['height'] = len(predictText)
 				self.userTextPredictListbox.delete(0, listboxLines)
 				line = 0
 				for predict in predictText:
@@ -195,12 +196,26 @@ class Application(object):
 		
 		translate = self.Sjson(self.GetTranslate(txt))
 		
+		num = 0
+		head = 0
+		for i in translate:
+			head += 1
+			if head >= self.translateText['width']:
+				num += 1
+				head = 0
+			if i == '\n':
+				num += 1
+				head = 0
+		#print(num)
+		#print(self.translateText['width'])
+		#print(len(translate))
+		self.translateText['height'] = num
 		self.translateText.delete(0.0, END)
 		self.translateText.insert(0.0, translate)
 
 		self.translateFrame.pack()
 		self.translateText.pack()
-		
+
 	def LoadSavedFile(self):
 		try:
 			filepath = r'py-youdao-dict.json'
