@@ -347,11 +347,6 @@ class Application(object):
 			print(u'单词本收录完毕')	
 
 
-
-
-
-
-
 #拼写检查
 class SpellCorrector(object):
 	def __init__(self):
@@ -403,88 +398,6 @@ class Predictor(object):
 		#	print(self.model[x])
 		return predictText[0:5] if len(predictText) > 5 else predictText
 		
-
-
-
-
-
-
-
-'''
-def Usage(cmdDict):
-	print('*' * 40)
-	print(u'0:显示帮助')
-	print(u'1:退出')
-	print(u'2:自动/手动保存到单词本 - 当前%s保存' \
-		%(u'自动' if cmdDict['autoSave'] else u'手动'))
-	print(u'3:不保存到单词本')
-	print(u'4:打开/关闭简洁模式 - 当前%s模式' \
-		%(u'打开' if cmdDict['simpleMode'] else u'关闭') )
-	print('*' * 40 + '\r\n')
-'''
-
-'''
-def DecodeCommand(cmd, usageDict, cmdDict):
-	if 'showUsage' == usageDict[cmd]:
-		Usage(cmdDict)
-	elif 'quitProgram' == usageDict[cmd]:
-		exit(0)	
-	else:
-		if 'simpleMode' == usageDict[cmd]:
-			cmdDict['simpleMode'] = not cmdDict['simpleMode']
-		if 'autoSave' == usageDict[cmd]:	
-			cmdDict['autoSave'] = not cmdDict['autoSave']
-			cmdDict['noSave'] =  False
-		if 'noSave' == usageDict[cmd]:
-			cmdDict['autoSave'] = False
-			cmdDict['noSave'] = True	
-'''
-
-
-'''
-def console_main():
-	usageDict = {
-		u'0': 'showUsage', 
-		u'1': 'quitProgram',
-		u'2': 'autoSave',
-		u'3': 'noSave',
-		u'4': 'simpleMode',
-	}
-	cmdDict = {
-		'showUsage': False,
-		'quitProgram': False,
-		'autoSave': True,
-		'noSave': False,
-		'simpleMode': False,
-	}	
-
-	spellCorrector = SpellCorrector()
-
-	predictor = Predictor()
-	#print(predictor.Predict('hel'))
-
-	LoadSavedFile()	
-	#WordbookSample(cmdDict)
-	#return
-
-	Usage(cmdDict)
-
-	while True:
-		txt = input(u'请输入要查询的文本：')
-		if txt:
-			if txt in usageDict:
-				DecodeCommand(txt, usageDict, cmdDict)
-			else:
-				correctTxt = spellCorrector.correct(txt) 
-				if correctTxt != txt:
-					print(u'您想要输入的是'+correctTxt+'吗(y/n/r)：')
-					correctChoice = input()
-					if correctChoice in ['y', 'Y']:
-						txt = correctTxt
-					elif correctChoice in ['r', 'R']:
-						continue
-				Sjson(GetTranslate(txt.lower()), cmdDict)
-'''
 
 def gui_main():
 	app = Application()
