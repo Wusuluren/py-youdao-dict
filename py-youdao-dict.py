@@ -30,6 +30,8 @@ class Application(object):
 		self.listboxIdx = -1
 		self.currentText = ''
 		self.correctUserInput = ''
+		self.EnglishToChinese = False
+		self.ChineseToEnglish = False
 
 		self.LoadSavedFile()
 
@@ -74,7 +76,10 @@ class Application(object):
 
 	def userTextChanged(self, event):
 
-		print(self.userText.get())
+		# print(self.userText.get())
+		# print('1',event.keycode)
+		# print('2',event.char)
+		# print('3',event.keysym)
 
 
 		predictFlag = False
@@ -92,6 +97,9 @@ class Application(object):
 			if self.currentText:
 				predictFlag = True
 			else:
+				self.EnglishToChinese = False
+				self.ChineseToEnglish = False
+				
 				self.userTextPredictListbox.delete(0, listboxLines)
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
@@ -104,11 +112,14 @@ class Application(object):
 			if self.currentText:
 				predictFlag = True
 			else:
+				self.EnglishToChinese = False
+				self.ChineseToEnglish = False
+
 				self.userTextPredictListbox.delete(0, listboxLines)
 				self.userTextPredictListbox.forget()
 				self.predictFrame.forget()
 		elif event.keysym == 'Return':
-			self.Search()
+				self.Search()
 		elif event.keysym == 'Up':
 			if self.listboxIdx > 0:
 				self.listboxIdx -= 1
@@ -144,8 +155,14 @@ class Application(object):
 				self.userTextEntry.delete(0, END)
 				self.userTextEntry.insert(0, t)
 		elif event.keysym in string.ascii_lowercase:
+			self.EnglishToChinese = True
 			self.currentText = self.userText.get() + event.char
 			predictFlag = True
+		elif event.keycode == 0:
+			self.ChineseToEnglish = True
+			self.currentText = self.userText.get() + event.char
+			predictFlag = True
+
 
 		if predictFlag:	
 			predictText = self.predictor.Predict(self.currentText)
@@ -171,7 +188,58 @@ class Application(object):
 		if not self.currentText:
 			return
 
-		self.listboxIdx = -1
+		if self.EnglishToChinese and self.ChineseToEnglish:
+			self.listboxIdx = -1
+			listboxLines = self.userTextPredictListbox.size()
+			self.userTextPredictListbox.delete(0, listboxLines)
+			self.userTextPredictListbox.forget()
+			self.predictFrame.forget()
+
+			warningInfo = u'不能中英文混合查询'
+			self.translateText['height'] = 1
+			self.translateText.delete(0.0, END)
+			self.translateText.insert(0.0, warningInfo)
+
+			self.translateFrame.pack()
+			self.translateText.pack()
+		elif self.EnglishToChinese:
+			self.EnglishToChineseTranslate()
+		elif self.ChineseToEnglish:
+			self.ChineseToEnglishTranslate()
+
+	def ChineseToEnglishTranslate(self):
+		listboxLines = self.userTextPredictListbox.size()
+		self.userTextPredictListbox.delete(0, listboxLines)
+		self.userTextPredictListbox.forget()
+		self.predictFrame.forget()
+
+		txt = self.userTextEntry.get()
+		#print(txt)
+		translate = self.SjsonChinese(self.GetTranslate(txt))
+
+		num = 0
+		head = 0
+		for i in translate:
+			head += 1
+			if head >= self.translateText['width']:
+				num += 1
+				head = 0
+			if i == '\n':
+				num += 1
+				head = 0
+		#print(num)
+		#print(self.translateText['width'])
+		#print(len(translate))
+		self.translateText['height'] = num
+		self.translateText.delete(0.0, END)
+		self.translateText.insert(0.0, translate)
+
+		self.translateFrame.pack()
+		self.translateText.pack()
+
+
+
+	def EnglishToChineseTranslate(self):
 		listboxLines = self.userTextPredictListbox.size()
 		self.userTextPredictListbox.delete(0, listboxLines)
 		self.userTextPredictListbox.forget()
@@ -199,7 +267,7 @@ class Application(object):
 			self.userTextEntry.focus_set()	
 		
 		translate = self.Sjson(self.GetTranslate(txt))
-		
+				
 		num = 0
 		head = 0
 		for i in translate:
@@ -288,6 +356,31 @@ class Application(object):
 				fp.close()
 				print(u'写入单词本成功\r\n')
 
+	def GetTranslateChinese(self, query):
+		url = 'http://fanyi.youdao.com/openapi.do'
+		data = {
+			'keyfrom': self.KEYFROM,
+			'key': self.API_KEY,
+			'type': 'data',
+			'doctype': 'json',
+			'version': 1.1,
+			'q': query
+		}
+		data = parse.urlencode(data)
+		url = url+'?'+data
+		req = request.Request(url)
+		offline = False
+		try:
+			response = request.urlopen(req)
+		except error.URLError:
+			offline = True
+			result = GetTranslateFromFile(query)
+		if not offline:	
+			result = json.loads(response.read())
+		return result					
+
+	
+
 	def GetTranslate(self, query):
 		query = query.lower()
 		url = 'http://fanyi.youdao.com/openapi.do'
@@ -311,6 +404,45 @@ class Application(object):
 		if not offline:	
 			result = json.loads(response.read())
 		return result					
+
+	def SjsonChinese(self, jsonData):
+		if None == jsonData:
+			return u'单词本中没有收录该单词，请联网查询！\r\n'
+
+		query = jsonData.get('query', '')
+		translation = jsonData.get('translation', '')
+		basic = jsonData.get('basic', '')
+		if basic == '':
+			return u'查询单词出现错误'
+
+		sequence = jsonData.get('web', [])	
+		phonetic, explains_txt, seq_txt, log_word_explains = \
+			'', '', '', ''
+
+		if basic:
+			phonetic = basic.get('phonetic', '')
+			explains = basic.get('explains', '')
+			for obj in explains:
+				explains_txt += obj+'\n'
+				log_word_explains += obj+','
+
+		if sequence:
+			for obj in sequence:
+				seq_txt += obj['key']+'\n'
+				values = ''
+				for i in obj['value']:
+					values += i+','
+				seq_txt += values+'\n'
+
+		result = ''
+		result += u'查询对象： %s [%s]\n' %(query, phonetic)
+		result += explains_txt
+		result += '-'*20+'\n'+seq_txt	
+
+		#self.SaveWordToFile(query, jsonData)
+
+		return result	
+
 
 	def Sjson(self, jsonData):
 		if None == jsonData:
