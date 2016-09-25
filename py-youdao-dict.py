@@ -75,13 +75,12 @@ class Application(object):
 		# self.correctEntry.insert(0, txt)	
 
 	def userTextChanged(self, event):
-
 		# print(self.userText.get())
 		# print('1',event.keycode)
 		# print('2',event.char)
 		# print('3',event.keysym)
-
-
+		# print(self.userText.get())
+		
 		predictFlag = False
 		idx = self.userTextEntry.index(INSERT)-1
 		listboxLines = self.userTextPredictListbox.size()
